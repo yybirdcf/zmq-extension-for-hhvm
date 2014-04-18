@@ -23,5 +23,13 @@ DynamicExtensions {
 }
 ```
 
+###Testing
+
+* Simple unit test: hhvm /usr/local/bin/phpunit unit_test.php (you need install [PHPUnit](http://phpunit.de/manual/3.7/en/installation.html) before unit testing)
+
+* Simple Pub-Sub test: run the pub(hhvm pub.php) and run the sub(hhvm sub.php)
+
+* Simple Poll test: run the pub(hhvm pub.php) and run the poll (hhvm poll.php)
+
 ###Report Errors
 First, I am sorry about anything unexpected! If you get any trouble when installing and running the extension , please tell me (haipengchencf@gmail.com); 
