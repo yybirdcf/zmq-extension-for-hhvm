@@ -3,7 +3,7 @@
 
 #include "hphp/runtime/base/base-includes.h"
 #include "hphp/runtime/ext/extension.h"
-#include "hphp/runtime/base/complex-types.h"
+//#include "hphp/runtime/base/complex-types.h"
 
 #include "zmq.hpp"
 
@@ -129,22 +129,22 @@ void ZmqPollResource::sweep() {
     clear();
 }
 
-Variant php_zmq_context_create(int64_t io_threads)
+Variant php_zmq_context_create(int io_threads)
 {
     try{
-        return NEWOBJ(ZmqContextResource)(io_threads);
+        return newres<ZmqContextResource>(io_threads);
     }catch(std::exception& e){
         return false;
     }
 }
 
-int64_t php_zmq_context_get_opt(const Resource& context, int64_t option)
+int php_zmq_context_get_opt(const Resource& context, int option)
 {
     auto ctx = context.getTyped<ZmqContextResource>()->getContext();
     return ctx->get_opt(option);
 }
 
-int64_t php_zmq_context_set_opt(const Resource& context, int64_t option, int64_t value)
+int php_zmq_context_set_opt(const Resource& context, int option, int value)
 { 
    try{
         auto ctx = context.getTyped<ZmqContextResource>()->getContext();
@@ -154,7 +154,7 @@ int64_t php_zmq_context_set_opt(const Resource& context, int64_t option, int64_t
    }
 }
 
-int64_t php_zmq_socket_connect(const Resource& socket, const String& dsn)
+int php_zmq_socket_connect(const Resource& socket, const String& dsn)
 {
    try{
         auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -165,17 +165,17 @@ int64_t php_zmq_socket_connect(const Resource& socket, const String& dsn)
    }
 }
 
-Variant php_zmq_socket_create(const Resource& context, int64_t type)
+Variant php_zmq_socket_create(const Resource& context, int type)
 {
     auto ctx = context.getTyped<ZmqContextResource>()->getContext();
     try{
-        return NEWOBJ(ZmqSocketResource)(ctx, type);
+        return newres<ZmqSocketResource>(ctx, type);
     }catch(std::exception& e){
        return false;
     }
 }
 
-int64_t php_zmq_socket_disconnect(const Resource& socket, const String& dsn)
+int php_zmq_socket_disconnect(const Resource& socket, const String& dsn)
 {
    try{
         auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -186,7 +186,7 @@ int64_t php_zmq_socket_disconnect(const Resource& socket, const String& dsn)
    }
 }
 
-int64_t php_zmq_socket_bind(const Resource& socket, const String& dsn)
+int php_zmq_socket_bind(const Resource& socket, const String& dsn)
 {
    try{
     auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -197,7 +197,7 @@ int64_t php_zmq_socket_bind(const Resource& socket, const String& dsn)
    }
 }
 
-int64_t php_zmq_socket_unbind(const Resource& socket, const String& dsn)
+int php_zmq_socket_unbind(const Resource& socket, const String& dsn)
 {
    try{
     auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -208,7 +208,7 @@ int64_t php_zmq_socket_unbind(const Resource& socket, const String& dsn)
    }
 }
 
-int64_t php_zmq_socket_send(const Resource& socket, const String& message, int64_t flags)
+int php_zmq_socket_send(const Resource& socket, const String& message, int flags)
 {
    try{
         zmq::message_t msg(message.length());
@@ -221,7 +221,7 @@ int64_t php_zmq_socket_send(const Resource& socket, const String& message, int64
    }
 }
 
-int64_t php_zmq_socket_recv(const Resource& socket, VRefParam message, int64_t flags)
+int php_zmq_socket_recv(const Resource& socket, VRefParam message, int flags)
 {
    try{
         zmq::message_t msg;
@@ -240,10 +240,10 @@ int64_t php_zmq_socket_recv(const Resource& socket, VRefParam message, int64_t f
 
 Variant php_zmq_poll_create()
 {
-    return NEWOBJ(ZmqPollResource);
+    return newres<ZmqPollResource>();
 }
 
-int64_t php_zmq_poll_add(const Resource& poll, const Resource& socket, const String& id, int64_t type)
+int php_zmq_poll_add(const Resource& poll, const Resource& socket, const String& id, int type)
 {
     auto pollRes = poll.getTyped<ZmqPollResource>();
     auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -251,7 +251,7 @@ int64_t php_zmq_poll_add(const Resource& poll, const Resource& socket, const Str
     return 0;
 }
 
-int64_t php_zmq_poll_poll(const Resource& poll, int64_t timeout, VRefParam readSocketsId, VRefParam writeSocketsId, VRefParam errorSocketsId)
+int php_zmq_poll_poll(const Resource& poll, int timeout, VRefParam readSocketsId, VRefParam writeSocketsId, VRefParam errorSocketsId)
 {
     Array r_arr;
    Array w_arr;
@@ -279,12 +279,11 @@ int64_t php_zmq_poll_poll(const Resource& poll, int64_t timeout, VRefParam readS
     std::vector<PollItem*> items = pollRes->getPollItems();
     int size = items.size();
    
-
-    zmq_pollitem_t *items_t = (zmq_pollitem_t*) malloc(sizeof(struct zmq_pollitem_t) * size);
+   zmq_pollitem_t *items_t = (zmq_pollitem_t*) malloc(sizeof(zmq_pollitem_t) * size);
 
    int i;
    for(i = 0; i < items.size(); i++){
-       memset(&items_t[i], 0, sizeof(struct zmq_pollitem_t));
+       memset(&items_t[i], 0, sizeof(zmq_pollitem_t));
        items_t[i].socket = *items[i]->getSock();
        items_t[i].events = items[i]->getType();
    }
@@ -315,21 +314,21 @@ int64_t php_zmq_poll_poll(const Resource& poll, int64_t timeout, VRefParam readS
    }
 }
 
-int64_t php_zmq_poll_remove(const Resource& poll, const String& id)
+int php_zmq_poll_remove(const Resource& poll, const String& id)
 {
     auto pollRes = poll.getTyped<ZmqPollResource>();
     pollRes->removePollItem(id);
     return 0;
 }
 
-int64_t php_zmq_poll_clear(const Resource& poll)
+int php_zmq_poll_clear(const Resource& poll)
 {
     auto pollRes = poll.getTyped<ZmqPollResource>();
     pollRes->clear();
     return 0;
 }
 
-int64_t php_zmq_socket_set_opt(const Resource& socket, int64_t key, const Variant& value)
+int php_zmq_socket_set_opt(const Resource& socket, int key, const Variant& value)
 {
     try{
         auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -349,8 +348,8 @@ int64_t php_zmq_socket_set_opt(const Resource& socket, int64_t key, const Varian
             break;
             case ZMQ_AFFINITY:
             {
-                uint64_t v = value.toInt64();
-                sock->setsockopt(ZMQ_AFFINITY, &v, sizeof(uint64_t));
+                uint v = value.toInt64();
+                sock->setsockopt(ZMQ_AFFINITY, &v, sizeof(uint));
                 }
             break;
             case ZMQ_SUBSCRIBE:
@@ -421,8 +420,8 @@ int64_t php_zmq_socket_set_opt(const Resource& socket, int64_t key, const Varian
             break;
             case ZMQ_MAXMSGSIZE:
             {
-                int64_t v = value.toInt64();
-                sock->setsockopt(ZMQ_MAXMSGSIZE, &v, sizeof(int64_t));
+                int v = value.toInt64();
+                sock->setsockopt(ZMQ_MAXMSGSIZE, &v, sizeof(int));
                 }
             break;
             case ZMQ_MULTICAST_HOPS:
@@ -499,8 +498,8 @@ int64_t php_zmq_socket_set_opt(const Resource& socket, int64_t key, const Varian
             break;
             case ZMQ_RCVMORE:
             {
-                int64_t v = value.toInt64();
-                sock->setsockopt(ZMQ_RCVMORE, &v, sizeof(int64_t));
+                int v = value.toInt64();
+                sock->setsockopt(ZMQ_RCVMORE, &v, sizeof(int));
             }
             break;
             default:
@@ -513,7 +512,7 @@ int64_t php_zmq_socket_set_opt(const Resource& socket, int64_t key, const Varian
        }
 }
 
-Variant php_zmq_socket_get_opt(const Resource& socket, int64_t key)
+Variant php_zmq_socket_get_opt(const Resource& socket, int key)
 {
     try{
         auto sock = socket.getTyped<ZmqSocketResource>()->getSocket();
@@ -537,8 +536,8 @@ Variant php_zmq_socket_get_opt(const Resource& socket, int64_t key)
             break;
             case ZMQ_AFFINITY:
             {
-                uint64_t v;
-                size_t size = sizeof(uint64_t);
+                int v;
+                size_t size = sizeof(uint);
                 sock->getsockopt(ZMQ_AFFINITY, &v, &size);
                 return v;
                 }
@@ -633,8 +632,8 @@ Variant php_zmq_socket_get_opt(const Resource& socket, int64_t key)
             break;
             case ZMQ_MAXMSGSIZE:
             {
-                int64_t v;
-                size_t size = sizeof(int64_t);
+                int v;
+                size_t size = sizeof(int);
                 sock->getsockopt(ZMQ_MAXMSGSIZE, &v, &size);
                 return v;
                 }
@@ -737,8 +736,8 @@ Variant php_zmq_socket_get_opt(const Resource& socket, int64_t key)
             break;
             case ZMQ_RCVMORE:
             {
-                int64_t v;
-                size_t size = sizeof(int64_t);
+                int v;
+                size_t size = sizeof(int);
                 sock->getsockopt(ZMQ_RCVMORE, &v, &size);
                 return v;
             }
@@ -753,52 +752,52 @@ Variant php_zmq_socket_get_opt(const Resource& socket, int64_t key)
        return 0;
 }
 
-static Variant HHVM_FUNCTION(zmq_context_create, int64_t io_threads)
+static Variant HHVM_FUNCTION(zmq_context_create, int io_threads)
 {
     return php_zmq_context_create(io_threads);
 }
 
-static int64_t HHVM_FUNCTION(zmq_context_get_opt, const Resource& context, int64_t option)
+static int HHVM_FUNCTION(zmq_context_get_opt, const Resource& context, int option)
 {
    return php_zmq_context_get_opt(context, option);
 }
 
-static int64_t HHVM_FUNCTION(zmq_context_set_opt, const Resource& context, int64_t option, int64_t value)
+static int HHVM_FUNCTION(zmq_context_set_opt, const Resource& context, int option, int value)
 {
    return php_zmq_context_set_opt(context, option, value);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_connect, const Resource& socket, const String& dsn)
+static int HHVM_FUNCTION(zmq_socket_connect, const Resource& socket, const String& dsn)
 {
    return php_zmq_socket_connect(socket, dsn);
 }
 
-static Variant HHVM_FUNCTION(zmq_socket_create, const Resource& context, int64_t type)
+static Variant HHVM_FUNCTION(zmq_socket_create, const Resource& context, int type)
 {
    return php_zmq_socket_create(context, type);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_disconnect, const Resource& socket, const String& dsn)
+static int HHVM_FUNCTION(zmq_socket_disconnect, const Resource& socket, const String& dsn)
 {
    return php_zmq_socket_disconnect(socket, dsn);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_bind, const Resource& socket, const String& dsn)
+static int HHVM_FUNCTION(zmq_socket_bind, const Resource& socket, const String& dsn)
 {
    return php_zmq_socket_bind(socket, dsn);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_unbind, const Resource& socket, const String& dsn)
+static int HHVM_FUNCTION(zmq_socket_unbind, const Resource& socket, const String& dsn)
 {
    return php_zmq_socket_unbind(socket, dsn);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_send, const Resource& socket, const String& message, int64_t flags)
+static int HHVM_FUNCTION(zmq_socket_send, const Resource& socket, const String& message, int flags)
 {
    return php_zmq_socket_send(socket, message, flags);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_recv, const Resource& socket, VRefParam message, int64_t flags)
+static int HHVM_FUNCTION(zmq_socket_recv, const Resource& socket, VRefParam message, int flags)
 {
    return php_zmq_socket_recv(socket, message, flags);
 }
@@ -808,32 +807,32 @@ static Variant HHVM_FUNCTION(zmq_poll_create)
     return php_zmq_poll_create();
 }
 
-static int64_t HHVM_FUNCTION(zmq_poll_add, const Resource& poll, const Resource& socket, const String& id, int64_t type)
+static int HHVM_FUNCTION(zmq_poll_add, const Resource& poll, const Resource& socket, const String& id, int type)
 {
     return php_zmq_poll_add(poll, socket, id, type);
 }
 
-static int64_t HHVM_FUNCTION(zmq_poll_poll, const Resource& poll, int64_t timeout, VRefParam readSocketsId, VRefParam writeSocketsId, VRefParam errorSocketsId)
+static int HHVM_FUNCTION(zmq_poll_poll, const Resource& poll, int timeout, VRefParam readSocketsId, VRefParam writeSocketsId, VRefParam errorSocketsId)
 {
    return php_zmq_poll_poll(poll, timeout, readSocketsId, writeSocketsId, errorSocketsId);
 }
 
-static int64_t HHVM_FUNCTION(zmq_poll_remove, const Resource& poll, const String& id)
+static int HHVM_FUNCTION(zmq_poll_remove, const Resource& poll, const String& id)
 {
     return php_zmq_poll_remove(poll, id);
 }
 
-static int64_t HHVM_FUNCTION(zmq_poll_clear, const Resource& poll)
+static int HHVM_FUNCTION(zmq_poll_clear, const Resource& poll)
 {
     return php_zmq_poll_clear(poll);
 }
 
-static int64_t HHVM_FUNCTION(zmq_socket_set_opt, const Resource& socket, int64_t key, const Variant& value)
+static int HHVM_FUNCTION(zmq_socket_set_opt, const Resource& socket, int key, const Variant& value)
 {
     return php_zmq_socket_set_opt(socket, key, value);
 }
 
-static Variant HHVM_FUNCTION(zmq_socket_get_opt, const Resource& socket, int64_t key)
+static Variant HHVM_FUNCTION(zmq_socket_get_opt, const Resource& socket, int key)
 {
     return php_zmq_socket_get_opt(socket, key);
 }
