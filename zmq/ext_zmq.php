@@ -135,7 +135,7 @@ class ZMQContext {
        }
 
        $zmqSocket = new ZMQSocket($this, $type, null, $on_new_socket);
-       return $zmaSocket;
+       return $zmqSocket;
    }
 
    /**
